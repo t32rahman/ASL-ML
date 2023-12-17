@@ -1,28 +1,36 @@
 import pickle
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
+import cv2
 import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
 
+# Load the data and labels from the pickle file
+pickle_file = open('./data.pickle', 'rb')
+data_dict = pickle.load(pickle_file)
+hand_data = np.asarray(data_dict['data'])
+hand_labels = np.asarray(data_dict['labels'])
 
-data_dict = pickle.load(open('./data.pickle', 'rb'))
+# Split the data and labels into training and testing sets
+train_data, test_data, train_labels, test_labels = train_test_split(hand_data, hand_labels, test_size=0.2, shuffle=True, stratify=hand_labels)
 
-data = np.asarray(data_dict['data'])
-labels = np.asarray(data_dict['labels'])
+# Create a random forest classifier
+classifier = RandomForestClassifier()
 
-x_train, x_test, y_train, y_test = train_test_split(data, labels, test_size=0.2, shuffle=True, stratify=labels)
+# Train the classifier on the training set
+classifier.fit(train_data, train_labels)
 
-model = RandomForestClassifier()
+# Predict the labels on the testing set
+test_predict = classifier.predict(test_data)
 
-model.fit(x_train, y_train)
+# Calculate the accuracy score of the prediction
+accuracy = accuracy_score(test_predict, test_labels)
 
-y_predict = model.predict(x_test)
+# Print the accuracy percentage
+print(f'{accuracy * 100}% of samples were classified correctly !')
 
-score = accuracy_score(y_predict, y_test)
-
-print('{}% of samples were classified correctly !'.format(score * 100))
-
-f = open('model.p', 'wb')
-pickle.dump({'model': model}, f)
-f.close()
+# Save the classifier to a pickle file
+model_file = open('model.p', 'wb')
+pickle.dump({'model': classifier}, model_file)
+model_file.close()
